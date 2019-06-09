@@ -1,4 +1,4 @@
-package com.acme.orderbook.book;
+package com.acme.orderbook.model;
 
 import org.springframework.stereotype.Component;
 
