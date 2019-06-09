@@ -1,5 +1,6 @@
 package com.acme.orderbook.rest;
 
+import com.acme.orderbook.model.Instrument;
 import com.acme.orderbook.model.Order;
 import com.acme.orderbook.model.Statistics;
 import com.acme.orderbook.rest.model.AddExecutionParams;
@@ -9,6 +10,8 @@ import com.acme.orderbook.service.PerformanceMetrics;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Created by robertk on 6/8/2019.
@@ -22,6 +25,13 @@ public class AppRestController {
     @Autowired
     public AppRestController(OrderBookService orderBookService) {
         this.orderBookService = orderBookService;
+    }
+
+    @RequestMapping(method = RequestMethod.GET, value = "instruments")
+    public ResponseEntity<?> getInstruments() {
+
+        List<Instrument> instruments = orderBookService.getInstruments();
+        return ResponseEntity.ok(instruments);
     }
 
     @RequestMapping(method = RequestMethod.PUT, value = "order-book/{instrumentId}/open")

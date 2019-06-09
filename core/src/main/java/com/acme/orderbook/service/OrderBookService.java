@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -20,6 +22,8 @@ public class OrderBookService {
 
     private final PerformanceMetrics performanceMetrics;
     private final Map<Long, OrderBook> orderBooks = new HashMap<>();
+
+    private final List<Instrument> instruments = new ArrayList<>();
     private final ConcurrentMap<Long, Order> allOrderMap = new ConcurrentHashMap<>(); // orderId -> order
 
     @Value("${instrumentIds}")
@@ -33,6 +37,9 @@ public class OrderBookService {
 
         for (String instrumentIdStr : instrumentIds.split(",")) {
             long instrumentId = Long.valueOf(instrumentIdStr);
+            Instrument instrument = new Instrument(instrumentId);
+            instruments.add(instrument);
+
             OrderBook orderBook = new OrderBookImpl(instrumentId);
             orderBooks.put(instrumentId, orderBook);
         }
@@ -40,6 +47,10 @@ public class OrderBookService {
 
     public PerformanceMetrics getPerformanceMetrics() {
         return performanceMetrics;
+    }
+
+    public List<Instrument> getInstruments() {
+        return instruments;
     }
 
     public void open(long instrumentId) {
@@ -54,6 +65,12 @@ public class OrderBookService {
 
     public void addOrder(long instrumentId, int quantity, Double limitPrice) {
         validate(instrumentId);
+        if (quantity <= 0) {
+            throw new IllegalStateException("order quantity must be greater than 0");
+
+        } else if (limitPrice != null && limitPrice < 0d) {
+            throw new IllegalStateException("order price must be null or greater than 0");
+        }
 
         long orderId = orderIdGenerator.incrementAndGet();
         Order order = new Order(instrumentId, orderId, LocalDateTime.now(), quantity, limitPrice);
@@ -68,6 +85,12 @@ public class OrderBookService {
 
     public void addExecution(long instrumentId, int quantity, double price) {
         validate(instrumentId);
+        if (quantity <= 0) {
+            throw new IllegalStateException("execution quantity must be greater than 0");
+
+        } else if (price < 0d) {
+            throw new IllegalStateException("execution price must be greater than 0");
+        }
 
         Execution execution = new Execution(instrumentId, quantity, price);
         orderBook(instrumentId).addExecution(execution);

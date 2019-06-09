@@ -1,6 +1,7 @@
 package com.acme.orderbook.model;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.TreeMap;
 
 /**
@@ -9,24 +10,24 @@ import java.util.TreeMap;
 public class Statistics {
     private final long instrumentId;
 
-    private int numberOrders;
+    private int activeOrders;
+    private int executedOrders;
+    private int canceledOrders;
 
-    private int numberValidOrders;
-    private int numberInvalidOrders;
+    private int activeValidOrders;
+    private int activeInvalidOrders;
 
-    private int validDemand;
-    private int invalidDemand;
-
-    private int largestOrderQuantity;
-    private int smallestOrderQuantity;
-
-    private LocalDateTime firstOrderEntry;
-    private LocalDateTime lastOrderEntry;
-
-    private final TreeMap<Double, Integer> activeOrderLimitBreakDownTable = new TreeMap<>();
-
-    private long accumulatedExecutionQuantity;
     private double lastExecutionPrice;
+    private int activeValidOrdersDemand;
+    private int activeInvalidOrdersDemand;
+
+    private int largestActiveOrderQuantity;
+    private int smallestActiveOrderQuantity;
+
+    private LocalDateTime firstActiveOrderEntry;
+    private LocalDateTime lastActiveOrderEntry;
+
+    private final Map<Double, Integer> activeOrderLimitBreakDownTable = new TreeMap<>();
 
     public Statistics(long instrumentId) {
         this.instrumentId = instrumentId;
@@ -36,88 +37,44 @@ public class Statistics {
         return instrumentId;
     }
 
-    public int getNumberOrders() {
-        return numberOrders;
+    public int getActiveOrders() {
+        return activeOrders;
     }
 
-    public void setNumberOrders(int numberOrders) {
-        this.numberOrders = numberOrders;
+    public void setActiveOrders(int activeOrders) {
+        this.activeOrders = activeOrders;
     }
 
-    public int getNumberValidOrders() {
-        return numberValidOrders;
+    public int getExecutedOrders() {
+        return executedOrders;
     }
 
-    public void setNumberValidOrders(int numberValidOrders) {
-        this.numberValidOrders = numberValidOrders;
+    public void setExecutedOrders(int executedOrders) {
+        this.executedOrders = executedOrders;
     }
 
-    public int getNumberInvalidOrders() {
-        return numberInvalidOrders;
+    public int getCanceledOrders() {
+        return canceledOrders;
     }
 
-    public void setNumberInvalidOrders(int numberInvalidOrders) {
-        this.numberInvalidOrders = numberInvalidOrders;
+    public void setCanceledOrders(int canceledOrders) {
+        this.canceledOrders = canceledOrders;
     }
 
-    public int getValidDemand() {
-        return validDemand;
+    public int getActiveValidOrders() {
+        return activeValidOrders;
     }
 
-    public void setValidDemand(int validDemand) {
-        this.validDemand = validDemand;
+    public void setActiveValidOrders(int activeValidOrders) {
+        this.activeValidOrders = activeValidOrders;
     }
 
-    public int getInvalidDemand() {
-        return invalidDemand;
+    public int getActiveInvalidOrders() {
+        return activeInvalidOrders;
     }
 
-    public void setInvalidDemand(int invalidDemand) {
-        this.invalidDemand = invalidDemand;
-    }
-
-    public int getLargestOrderQuantity() {
-        return largestOrderQuantity;
-    }
-
-    public void setLargestOrderQuantity(int largestOrderQuantity) {
-        this.largestOrderQuantity = largestOrderQuantity;
-    }
-
-    public int getSmallestOrderQuantity() {
-        return smallestOrderQuantity;
-    }
-
-    public void setSmallestOrderQuantity(int smallestOrderQuantity) {
-        this.smallestOrderQuantity = smallestOrderQuantity;
-    }
-
-    public LocalDateTime getFirstOrderEntry() {
-        return firstOrderEntry;
-    }
-
-    public void setFirstOrderEntry(LocalDateTime firstOrderEntry) {
-        this.firstOrderEntry = firstOrderEntry;
-    }
-
-    public LocalDateTime getLastOrderEntry() {
-        return lastOrderEntry;
-    }
-
-    public void setLastOrderEntry(LocalDateTime lastOrderEntry) {
-        this.lastOrderEntry = lastOrderEntry;
-    }
-
-    public TreeMap<Double, Integer> getActiveOrderLimitBreakDownTable() {
-        return activeOrderLimitBreakDownTable;
-    }
-
-    public long getAccumulatedExecutionQuantity() {
-        return accumulatedExecutionQuantity;
-    }
-
-    public void setAccumulatedExecutionQuantity(long accumulatedExecutionQuantity) {
-        this.accumulatedExecutionQuantity = accumulatedExecutionQuantity;
+    public void setActiveInvalidOrders(int activeInvalidOrders) {
+        this.activeInvalidOrders = activeInvalidOrders;
     }
 
     public double getLastExecutionPrice() {
@@ -128,22 +85,55 @@ public class Statistics {
         this.lastExecutionPrice = lastExecutionPrice;
     }
 
-    @Override
-    public String toString() {
-        return "Statistics{" +
-                "instrumentId=" + instrumentId +
-                ", numberOrders=" + numberOrders +
-                ", numberValidOrders=" + numberValidOrders +
-                ", numberInvalidOrders=" + numberInvalidOrders +
-                ", validDemand=" + validDemand +
-                ", invalidDemand=" + invalidDemand +
-                ", largestOrderQuantity=" + largestOrderQuantity +
-                ", smallestOrderQuantity=" + smallestOrderQuantity +
-                ", firstOrderEntry=" + firstOrderEntry +
-                ", lastOrderEntry=" + lastOrderEntry +
-                ", activeOrderLimitBreakDownTable=" + activeOrderLimitBreakDownTable +
-                ", accumulatedExecutionQuantity=" + accumulatedExecutionQuantity +
-                ", lastExecutionPrice=" + lastExecutionPrice +
-                '}';
+    public int getActiveValidOrdersDemand() {
+        return activeValidOrdersDemand;
+    }
+
+    public void setActiveValidOrdersDemand(int activeValidOrdersDemand) {
+        this.activeValidOrdersDemand = activeValidOrdersDemand;
+    }
+
+    public int getActiveInvalidOrdersDemand() {
+        return activeInvalidOrdersDemand;
+    }
+
+    public void setActiveInvalidOrdersDemand(int activeInvalidOrdersDemand) {
+        this.activeInvalidOrdersDemand = activeInvalidOrdersDemand;
+    }
+
+    public int getLargestActiveOrderQuantity() {
+        return largestActiveOrderQuantity;
+    }
+
+    public void setLargestActiveOrderQuantity(int largestActiveOrderQuantity) {
+        this.largestActiveOrderQuantity = largestActiveOrderQuantity;
+    }
+
+    public int getSmallestActiveOrderQuantity() {
+        return smallestActiveOrderQuantity;
+    }
+
+    public void setSmallestActiveOrderQuantity(int smallestActiveOrderQuantity) {
+        this.smallestActiveOrderQuantity = smallestActiveOrderQuantity;
+    }
+
+    public LocalDateTime getFirstActiveOrderEntry() {
+        return firstActiveOrderEntry;
+    }
+
+    public void setFirstActiveOrderEntry(LocalDateTime firstActiveOrderEntry) {
+        this.firstActiveOrderEntry = firstActiveOrderEntry;
+    }
+
+    public LocalDateTime getLastActiveOrderEntry() {
+        return lastActiveOrderEntry;
+    }
+
+    public void setLastActiveOrderEntry(LocalDateTime lastActiveOrderEntry) {
+        this.lastActiveOrderEntry = lastActiveOrderEntry;
+    }
+
+    public Map<Double, Integer> getActiveOrderLimitBreakDownTable() {
+        return activeOrderLimitBreakDownTable;
     }
 }

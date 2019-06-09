@@ -27,27 +27,31 @@ public class Order {
         this.limitPrice = limitPrice;
     }
 
-    private boolean isMarketOrder() {
-        return limitPrice == null;
+    public boolean isLimitOrder() {
+        return limitPrice != null;
     }
 
-    private int executedQuantity() {
+    public int getExecutedQuantity() {
         return partialExecutions.stream().mapToInt(OrderPartialExecution::getQuantity).sum();
     }
 
+    public int getUnexecutedQuantity() {
+        return quantity - getExecutedQuantity();
+    }
+
     public boolean isValid(double executionPrice) {
-        return isMarketOrder() || limitPrice >= executionPrice;
+        return !isLimitOrder() || limitPrice >= executionPrice;
     }
 
     public boolean isExecuted() {
-        return quantity == executedQuantity();
+        return quantity == getExecutedQuantity();
     }
 
     public void addPartialExecution(int partialQuantity, double partialPrice) {
         if (isExecuted()) {
             throw new IllegalStateException("order already executed " + this);
 
-        } else if (partialQuantity > (quantity - executedQuantity())) {
+        } else if (partialQuantity > getUnexecutedQuantity()) {
             throw new IllegalStateException("invalid partial quantity " + partialQuantity + " for order " + this);
 
         } else if (!isValid(partialPrice)) {
@@ -96,7 +100,7 @@ public class Order {
                 ", entryDate=" + entryDate +
                 ", quantity=" + quantity +
                 ", limitPrice=" + limitPrice +
-                ", executedQuantity=" + executedQuantity() +
+                ", executedQuantity=" + getExecutedQuantity() +
                 ", executionDate=" + executionDate +
                 '}';
     }
