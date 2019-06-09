@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,7 +35,10 @@ public class OrderBookService {
     @Autowired
     public OrderBookService(PerformanceMetrics performanceMetrics) {
         this.performanceMetrics = performanceMetrics;
+    }
 
+    @PostConstruct
+    private void postConstruct() {
         for (String instrumentIdStr : instrumentIds.split(",")) {
             long instrumentId = Long.valueOf(instrumentIdStr);
             Instrument instrument = new Instrument(instrumentId);
