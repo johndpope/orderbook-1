@@ -18,16 +18,12 @@ public class OrderBookImpl implements OrderBook {
     private final long instrumentId;
 
     private AtomicBoolean open = new AtomicBoolean(true);
-    private final ConcurrentMap<Long, Order> orderMap = new ConcurrentHashMap<>(); // orderId -> order
+    private final ConcurrentMap<Long, Order> activeOrderMap = new ConcurrentHashMap<>(); // orderId -> order
+    private final ConcurrentMap<Long, Order> executedOrderMap = new ConcurrentHashMap<>(); // orderId -> order
     private final List<Execution> executions = new ArrayList<>();
 
     public OrderBookImpl(long instrumentId) {
         this.instrumentId = instrumentId;
-    }
-
-    @Override
-    public long getInstrumentId() {
-        return instrumentId;
     }
 
     @Override
@@ -52,15 +48,10 @@ public class OrderBookImpl implements OrderBook {
     public void addOrder(Order order) {
         validate(order.getInstrumentId());
         if (isOpen()) {
-            orderMap.put(order.getOrderId(), order);
+            activeOrderMap.put(order.getOrderId(), order);
         } else {
             throw new IllegalStateException("cannot add orders to closed book " + instrumentId);
         }
-    }
-
-    @Override
-    public Order getOrder(long orderId) {
-        return orderMap.get(orderId);
     }
 
     @Override
@@ -68,11 +59,17 @@ public class OrderBookImpl implements OrderBook {
         validate(execution.getInstrumentId());
 
         if (!isOpen()) {
-            executions.add(execution);
-            // TODO calculate quantities and partially execute orders
+            if (!isExecuted()) {
+                executions.add(execution);
+                // TODO calculate quantities and partially execute orders
+                // TODO move executed orders from active to executed order map
+
+            } else {
+                throw new IllegalStateException("cannot add execution to already executed book " + instrumentId);
+            }
         }
         if (open.get()) {
-            throw new IllegalStateException("cannot add executions to closed book " + instrumentId);
+            throw new IllegalStateException("cannot add execution to closed book " + instrumentId);
         }
     }
 
@@ -84,8 +81,10 @@ public class OrderBookImpl implements OrderBook {
 
     @Override
     public Statistics generateStatistics() {
-        // TODO
-        return null;
+        Statistics statistics = new Statistics(instrumentId);
+        // TODO calculate statistics
+
+        return statistics;
     }
 
     private boolean isOpen() {

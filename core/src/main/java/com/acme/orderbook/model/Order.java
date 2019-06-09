@@ -15,6 +15,8 @@ public class Order {
     private final int quantity;
     private final Double limitPrice;
 
+    private LocalDateTime executionDate;
+
     private final List<OrderPartialExecution> partialExecutions = new ArrayList<>();
 
     public Order(long instrumentId, long orderId, LocalDateTime entryDate, int quantity, Double limitPrice) {
@@ -37,16 +39,25 @@ public class Order {
         return isMarketOrder() || limitPrice >= executionPrice;
     }
 
-    public void addPartialExecution(int partialQuantity, double partialPrice) {
-        if (partialQuantity > (quantity - executedQuantity())) {
-            throw new IllegalStateException("invalid partial quantity " + partialQuantity + " for order " + this);
-        }
+    public boolean isExecuted() {
+        return quantity == executedQuantity();
+    }
 
-        if (!isValid(partialPrice)) {
+    public void addPartialExecution(int partialQuantity, double partialPrice) {
+        if (isExecuted()) {
+            throw new IllegalStateException("order already executed " + this);
+
+        } else if (partialQuantity > (quantity - executedQuantity())) {
+            throw new IllegalStateException("invalid partial quantity " + partialQuantity + " for order " + this);
+
+        } else if (!isValid(partialPrice)) {
             throw new IllegalStateException("invalid partial price " + partialPrice + " for order " + this);
         }
 
         partialExecutions.add(new OrderPartialExecution(partialQuantity, partialPrice));
+        if (isExecuted()) {
+            executionDate = LocalDateTime.now();
+        }
     }
 
     public List<OrderPartialExecution> getPartialExecutions() {
@@ -73,6 +84,10 @@ public class Order {
         return limitPrice;
     }
 
+    public LocalDateTime getExecutionDate() {
+        return executionDate;
+    }
+
     @Override
     public String toString() {
         return "Order{" +
@@ -82,6 +97,7 @@ public class Order {
                 ", quantity=" + quantity +
                 ", limitPrice=" + limitPrice +
                 ", executedQuantity=" + executedQuantity() +
+                ", executionDate=" + executionDate +
                 '}';
     }
 }

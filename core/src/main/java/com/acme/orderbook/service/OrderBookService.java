@@ -57,6 +57,8 @@ public class OrderBookService {
 
         long orderId = orderIdGenerator.incrementAndGet();
         Order order = new Order(instrumentId, orderId, LocalDateTime.now(), quantity, limitPrice);
+
+        allOrderMap.put(orderId, order);
         orderBook(instrumentId).addOrder(order);
     }
 
