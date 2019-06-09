@@ -1,5 +1,6 @@
 package com.acme.orderbook.model;
 
+import com.acme.orderbook.common.OrderBookUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,65 +64,62 @@ public class OrderBookImpl implements OrderBook {
     public void addExecution(Execution execution) {
         validate(execution.getInstrumentId());
 
+        double executionPrice = execution.getPrice();
+        int executionQuantity = execution.getQuantity();
+
         if (!isOpen()) {
+            checkIfBookExecuted(executionPrice);
+
             if (!isExecuted()) {
                 executions.add(execution);
 
-                List<Order> validOrders = getActiveValidOrders((execution.getPrice()));
-                int validOrdersDemand = getActiveValidOrdersDemand(execution.getPrice());
-
-                if (validOrdersDemand == 0) {
-                    executed.set(true);
-                    activeOrderMap.values().forEach(o -> canceledOrderMap.put(o.getOrderId(), o));
-                    activeOrderMap.clear();
-
-                    return;
-                }
+                List<Order> validOrders = getActiveValidOrders(executionPrice);
+                List<Order> invalidOrders = getActiveInvalidOrders(executionPrice);
+                int validOrdersDemand = getActiveValidOrdersDemand(executionPrice);
 
                 int appliedQuantity = 0;
+
                 for (Order order : validOrders) {
-                    // TODO
-                    if (appliedQuantity == execution.getQuantity()) {
-                        break;
-                    }
+                    double pctToApply = (double) order.getQuantity() / (double) validOrdersDemand;
+                    int orderPartialExecutionQuantity = OrderBookUtil.min(executionQuantity - appliedQuantity, order.getUnexecutedQuantity(), (int) Math.ceil(pctToApply * executionQuantity));
+
+                    order.addPartialExecution(orderPartialExecutionQuantity, executionPrice);
+                    appliedQuantity += orderPartialExecutionQuantity;
+                }
+
+                for (Order order : invalidOrders) {
+                    order.addPartialExecution(0, executionPrice);
                 }
 
                 validOrders.stream().filter(Order::isExecuted).forEach(o -> {
                     activeOrderMap.remove(o.getOrderId());
                     executedOrderMap.put(o.getOrderId(), o);
                 });
+
+                checkIfBookExecuted(executionPrice);
             } else {
                 throw new IllegalStateException("cannot add execution to already executed book " + instrumentId);
             }
-        }
-        if (open.get()) {
+        } else {
             throw new IllegalStateException("cannot add execution to closed book " + instrumentId);
+        }
+    }
+
+    private void checkIfBookExecuted(double executionPrice) {
+        if (!isExecuted()) {
+            int validOrdersDemand = getActiveValidOrdersDemand(executionPrice);
+
+            if (validOrdersDemand == 0) {
+                executed.set(true);
+                activeOrderMap.values().forEach(o -> canceledOrderMap.put(o.getOrderId(), o));
+                activeOrderMap.clear();
+            }
         }
     }
 
     @Override
     public boolean isExecuted() {
         return executed.get();
-    }
-
-    private List<Order> getActiveValidOrders(double price) {
-        return activeOrderMap.values().stream().filter(o -> o.isValid(price)).collect(Collectors.toList());
-    }
-
-    private List<Order> getActiveInvalidOrders(double price) {
-        return activeOrderMap.values().stream().filter(o -> !o.isValid(price)).collect(Collectors.toList());
-    }
-
-    private int getActiveValidOrdersDemand(double price) {
-        return activeOrderMap.values().stream().filter(o -> o.isValid(price)).mapToInt(Order::getUnexecutedQuantity).sum();
-    }
-
-    private int getActiveInvalidOrdersDemand(double price) {
-        return activeOrderMap.values().stream().filter(o -> !o.isValid(price)).mapToInt(Order::getUnexecutedQuantity).sum();
-    }
-
-    private Execution getLastExecution() {
-        return executions.size() > 0 ? executions.get(executions.size() - 1) : null;
     }
 
     @Override
@@ -175,6 +173,26 @@ public class OrderBookImpl implements OrderBook {
             }
         }
         return s;
+    }
+
+    private List<Order> getActiveValidOrders(double price) {
+        return activeOrderMap.values().stream().filter(o -> o.isValid(price)).collect(Collectors.toList());
+    }
+
+    private List<Order> getActiveInvalidOrders(double price) {
+        return activeOrderMap.values().stream().filter(o -> !o.isValid(price)).collect(Collectors.toList());
+    }
+
+    private int getActiveValidOrdersDemand(double price) {
+        return activeOrderMap.values().stream().filter(o -> o.isValid(price)).mapToInt(Order::getUnexecutedQuantity).sum();
+    }
+
+    private int getActiveInvalidOrdersDemand(double price) {
+        return activeOrderMap.values().stream().filter(o -> !o.isValid(price)).mapToInt(Order::getUnexecutedQuantity).sum();
+    }
+
+    private Execution getLastExecution() {
+        return executions.size() > 0 ? executions.get(executions.size() - 1) : null;
     }
 
     private boolean isOpen() {
