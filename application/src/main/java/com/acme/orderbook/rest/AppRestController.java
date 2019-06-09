@@ -1,5 +1,7 @@
 package com.acme.orderbook.rest;
 
+import com.acme.orderbook.service.OrderBookService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,6 +14,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/")
 public class AppRestController {
+
+    private final OrderBookService orderBookService;
+
+    @Autowired
+    public AppRestController(OrderBookService orderBookService) {
+        this.orderBookService = orderBookService;
+    }
 
     @RequestMapping(method = RequestMethod.PUT, value = "test/graceful-shutdown")
     public String gracefulShutdownTest() {
