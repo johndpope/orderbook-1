@@ -56,6 +56,11 @@ public class OrderBookImpl implements OrderBook {
     }
 
     @Override
+    public boolean isOpen() {
+        return open.get();
+    }
+
+    @Override
     public void addOrder(Order order) {
         validate(order.getInstrumentId());
 
@@ -78,19 +83,14 @@ public class OrderBookImpl implements OrderBook {
 
             if (!isExecuted()) {
                 executions.add(execution);
-
                 List<Order> validOrders = getActiveValidOrders(executionPrice);
                 List<Order> invalidOrders = getActiveInvalidOrders(executionPrice);
-                int validOrdersDemand = getActiveValidOrdersDemand(executionPrice);
 
-                int appliedQuantity = 0;
+                List<Integer> demands = validOrders.stream().map(Order::getUnexecutedQuantity).collect(Collectors.toList());
+                List<Integer> orderPartialExecutionQuantities = calculateOrderPartialExecutionQuantities(demands, executionQuantity);
 
-                for (Order order : validOrders) {
-                    double pctToApply = (double) order.getQuantity() / (double) validOrdersDemand;
-                    int orderPartialExecutionQuantity = OrderBookUtil.min(executionQuantity - appliedQuantity, order.getUnexecutedQuantity(), (int) Math.ceil(pctToApply * executionQuantity));
-
-                    order.addPartialExecution(orderPartialExecutionQuantity, executionPrice);
-                    appliedQuantity += orderPartialExecutionQuantity;
+                for (int i = 0; i < orderPartialExecutionQuantities.size(); i++) {
+                    validOrders.get(i).addPartialExecution(orderPartialExecutionQuantities.get(i), executionPrice);
                 }
 
                 for (Order order : invalidOrders) {
@@ -109,6 +109,22 @@ public class OrderBookImpl implements OrderBook {
         } else {
             throw new IllegalStateException("cannot add execution to open book " + instrumentId);
         }
+    }
+
+    List<Integer> calculateOrderPartialExecutionQuantities(List<Integer> demands, int quantityToDistribute) {
+        int cumulativeDemand = demands.stream().mapToInt(d -> d).sum();
+        List<Integer> partialExecutionQuantities = new ArrayList<>();
+
+        int distributedQuantity = 0;
+
+        for (int demand : demands) {
+            double pctToApply = (double) demand / (double) cumulativeDemand;
+            int partialExecutionQuantity = OrderBookUtil.min(quantityToDistribute - distributedQuantity, demand, (int) Math.ceil(pctToApply * quantityToDistribute));
+
+            partialExecutionQuantities.add(partialExecutionQuantity);
+            distributedQuantity += partialExecutionQuantity;
+        }
+        return partialExecutionQuantities;
     }
 
     private void checkIfBookExecuted(double executionPrice) {
@@ -170,28 +186,24 @@ public class OrderBookImpl implements OrderBook {
         return s;
     }
 
-    private List<Order> getActiveValidOrders(double price) {
+    List<Order> getActiveValidOrders(double price) {
         return activeOrderMap.values().stream().filter(o -> o.isValid(price)).collect(Collectors.toList());
     }
 
-    private List<Order> getActiveInvalidOrders(double price) {
+    List<Order> getActiveInvalidOrders(double price) {
         return activeOrderMap.values().stream().filter(o -> !o.isValid(price)).collect(Collectors.toList());
     }
 
-    private int getActiveValidOrdersDemand(double price) {
+    int getActiveValidOrdersDemand(double price) {
         return activeOrderMap.values().stream().filter(o -> o.isValid(price)).mapToInt(Order::getUnexecutedQuantity).sum();
     }
 
-    private int getActiveInvalidOrdersDemand(double price) {
+    int getActiveInvalidOrdersDemand(double price) {
         return activeOrderMap.values().stream().filter(o -> !o.isValid(price)).mapToInt(Order::getUnexecutedQuantity).sum();
     }
 
-    private Execution getLastExecution() {
+    Execution getLastExecution() {
         return executions.size() > 0 ? executions.get(executions.size() - 1) : null;
-    }
-
-    private boolean isOpen() {
-        return open.get();
     }
 
     private void validate(long instrumentId) {

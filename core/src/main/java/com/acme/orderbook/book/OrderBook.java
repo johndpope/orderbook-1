@@ -10,6 +10,7 @@ import com.acme.orderbook.model.Statistics;
 public interface OrderBook {
     void open();
     void close();
+    boolean isOpen();
 
     void addOrder(Order order);
 
