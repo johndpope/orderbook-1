@@ -1,5 +1,7 @@
 package com.acme.orderbook.service;
 
+import com.acme.orderbook.book.OrderBook;
+import com.acme.orderbook.book.OrderBookImpl;
 import com.acme.orderbook.model.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,9 +24,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class OrderBookService {
 
     private final PerformanceMetrics performanceMetrics;
+    private final List<Instrument> instruments = new ArrayList<>();
     private final Map<Long, OrderBook> orderBooks = new HashMap<>();
 
-    private final List<Instrument> instruments = new ArrayList<>();
     private final ConcurrentMap<Long, Order> allOrderMap = new ConcurrentHashMap<>(); // orderId -> order
 
     @Value("${instrumentIds}")
@@ -72,7 +74,7 @@ public class OrderBookService {
         if (quantity <= 0) {
             throw new IllegalStateException("order quantity must be greater than 0");
 
-        } else if (limitPrice != null && limitPrice < 0d) {
+        } else if (limitPrice != null && limitPrice <= 0d) {
             throw new IllegalStateException("order price must be null or greater than 0");
         }
 
@@ -92,7 +94,7 @@ public class OrderBookService {
         if (quantity <= 0) {
             throw new IllegalStateException("execution quantity must be greater than 0");
 
-        } else if (price < 0d) {
+        } else if (price <= 0d) {
             throw new IllegalStateException("execution price must be greater than 0");
         }
 

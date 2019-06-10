@@ -1,12 +1,17 @@
-package com.acme.orderbook.model;
+package com.acme.orderbook.book;
 
 import com.acme.orderbook.common.OrderBookUtil;
+import com.acme.orderbook.model.Execution;
+import com.acme.orderbook.model.Order;
+import com.acme.orderbook.model.Statistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,12 +26,12 @@ public class OrderBookImpl implements OrderBook {
     private final long instrumentId;
 
     private AtomicBoolean open = new AtomicBoolean(true);
+    private AtomicBoolean executed = new AtomicBoolean(false);
+
     private final ConcurrentMap<Long, Order> activeOrderMap = new ConcurrentHashMap<>(); // orderId -> order
     private final ConcurrentMap<Long, Order> executedOrderMap = new ConcurrentHashMap<>(); // orderId -> order
     private final ConcurrentMap<Long, Order> canceledOrderMap = new ConcurrentHashMap<>(); // orderId -> order
     private final List<Execution> executions = new ArrayList<>();
-
-    private AtomicBoolean executed = new AtomicBoolean(false);
 
     public OrderBookImpl(long instrumentId) {
         this.instrumentId = instrumentId;
@@ -53,6 +58,7 @@ public class OrderBookImpl implements OrderBook {
     @Override
     public void addOrder(Order order) {
         validate(order.getInstrumentId());
+
         if (isOpen()) {
             activeOrderMap.put(order.getOrderId(), order);
         } else {
@@ -101,7 +107,7 @@ public class OrderBookImpl implements OrderBook {
                 throw new IllegalStateException("cannot add execution to already executed book " + instrumentId);
             }
         } else {
-            throw new IllegalStateException("cannot add execution to closed book " + instrumentId);
+            throw new IllegalStateException("cannot add execution to open book " + instrumentId);
         }
     }
 
@@ -142,21 +148,11 @@ public class OrderBookImpl implements OrderBook {
             s.setActiveInvalidOrdersDemand(getActiveInvalidOrdersDemand(lastExecutionPrice));
         }
 
-        OptionalInt largestActiveOrderQuantityOptional = activeOrderMap.values().stream().mapToInt(Order::getQuantity).max();
-        if (largestActiveOrderQuantityOptional.isPresent()) {
-            s.setLargestActiveOrderQuantity(largestActiveOrderQuantityOptional.getAsInt());
-        }
+        activeOrderMap.values().stream().mapToInt(Order::getQuantity).max().ifPresent(s::setLargestActiveOrderQuantity);
+        activeOrderMap.values().stream().mapToInt(Order::getQuantity).min().ifPresent(s::setSmallestActiveOrderQuantity);
 
-        OptionalInt smallestActiveOrderQuantityOptional = activeOrderMap.values().stream().mapToInt(Order::getQuantity).min();
-        if (smallestActiveOrderQuantityOptional.isPresent()) {
-            s.setLargestActiveOrderQuantity(smallestActiveOrderQuantityOptional.getAsInt());
-        }
-
-        Optional<LocalDateTime> firstActiveOrderEntryOptional = activeOrderMap.values().stream().map(Order::getEntryDate).min(Comparator.comparing(ldt -> ldt.toEpochSecond(ZoneOffset.UTC)));
-        firstActiveOrderEntryOptional.ifPresent(s::setFirstActiveOrderEntry);
-
-        Optional<LocalDateTime> lastActiveOrderEntryOptional = activeOrderMap.values().stream().map(Order::getEntryDate).max(Comparator.comparing(ldt -> ldt.toEpochSecond(ZoneOffset.UTC)));
-        lastActiveOrderEntryOptional.ifPresent(s::setLastActiveOrderEntry);
+        activeOrderMap.values().stream().map(Order::getEntryDate).min(Comparator.comparing(ldt -> ldt.toEpochSecond(ZoneOffset.UTC))).ifPresent(s::setFirstActiveOrderEntry);
+        activeOrderMap.values().stream().map(Order::getEntryDate).max(Comparator.comparing(ldt -> ldt.toEpochSecond(ZoneOffset.UTC))).ifPresent(s::setLastActiveOrderEntry);
 
         for (Order order : activeOrderMap.values()) {
             if (order.isLimitOrder()) {
@@ -165,11 +161,10 @@ public class OrderBookImpl implements OrderBook {
 
                 Map<Double, Integer> t = s.getActiveOrderLimitBreakDownTable();
 
-                if (t.containsKey(limitPrice)) {
-                    t.put(limitPrice, t.get(limitPrice) + orderDemand);
-                } else {
-                    t.put(limitPrice, orderDemand);
-                }
+                Integer currentCumulativeDemandPerLimitPrice = t.get(limitPrice);
+                int newCumulativeDemandPerLimitPrice = currentCumulativeDemandPerLimitPrice != null ? currentCumulativeDemandPerLimitPrice + orderDemand : orderDemand;
+
+                t.put(limitPrice, newCumulativeDemandPerLimitPrice);
             }
         }
         return s;

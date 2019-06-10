@@ -1,4 +1,8 @@
-package com.acme.orderbook.model;
+package com.acme.orderbook.book;
+
+import com.acme.orderbook.model.Execution;
+import com.acme.orderbook.model.Order;
+import com.acme.orderbook.model.Statistics;
 
 /**
  * Created by robertk on 6/8/2019.
