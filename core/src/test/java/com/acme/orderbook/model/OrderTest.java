@@ -99,11 +99,13 @@ public class OrderTest {
         assertFalse(marketOrder.isExecuted());
         assertEquals(2, marketOrder.getPartialExecutions().size());
 
+        // a market order will work with any price
         marketOrder.addPartialExecution(35, 72.6);
         assertEquals(0, marketOrder.getUnexecutedQuantity());
         assertTrue(marketOrder.isExecuted());
         assertEquals(3, marketOrder.getPartialExecutions().size());
 
+        // cannot add a partial execution to an already executed order
         exceptionRule.expect(IllegalStateException.class);
         exceptionRule.expectMessage("order already executed");
         marketOrder.addPartialExecution(20, 47.7);

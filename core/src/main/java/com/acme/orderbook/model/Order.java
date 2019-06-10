@@ -54,7 +54,7 @@ public class Order {
         } else if (partialQuantity > getUnexecutedQuantity()) {
             throw new IllegalStateException("invalid partial quantity " + partialQuantity + " for order " + this);
 
-        } else if (!isValid(partialPrice)) {
+        } else if (!isValid(partialPrice) && partialQuantity != 0) {
             throw new IllegalStateException("invalid partial price " + partialPrice + " for order " + this);
         }
 

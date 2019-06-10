@@ -206,6 +206,18 @@ public class OrderBookImpl implements OrderBook {
         return executions.size() > 0 ? executions.get(executions.size() - 1) : null;
     }
 
+    Map<Long, Order> getActiveOrderMap() {
+        return activeOrderMap;
+    }
+
+    Map<Long, Order> getExecutedOrderMap() {
+        return executedOrderMap;
+    }
+
+    Map<Long, Order> getCanceledOrderMap() {
+        return canceledOrderMap;
+    }
+
     private void validate(long instrumentId) {
         if (this.instrumentId != instrumentId) {
             throw new IllegalStateException("wrong order book " + this.instrumentId + " != " + instrumentId);

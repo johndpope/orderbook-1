@@ -136,4 +136,24 @@ public class Statistics {
     public Map<Double, Integer> getActiveOrderLimitBreakDownTable() {
         return activeOrderLimitBreakDownTable;
     }
+
+    @Override
+    public String toString() {
+        return "Statistics{" +
+                "instrumentId=" + instrumentId +
+                ", activeOrders=" + activeOrders +
+                ", executedOrders=" + executedOrders +
+                ", canceledOrders=" + canceledOrders +
+                ", activeValidOrders=" + activeValidOrders +
+                ", activeInvalidOrders=" + activeInvalidOrders +
+                ", lastExecutionPrice=" + lastExecutionPrice +
+                ", activeValidOrdersDemand=" + activeValidOrdersDemand +
+                ", activeInvalidOrdersDemand=" + activeInvalidOrdersDemand +
+                ", largestActiveOrderQuantity=" + largestActiveOrderQuantity +
+                ", smallestActiveOrderQuantity=" + smallestActiveOrderQuantity +
+                ", firstActiveOrderEntry=" + firstActiveOrderEntry +
+                ", lastActiveOrderEntry=" + lastActiveOrderEntry +
+                ", activeOrderLimitBreakDownTable=" + activeOrderLimitBreakDownTable +
+                '}';
+    }
 }
