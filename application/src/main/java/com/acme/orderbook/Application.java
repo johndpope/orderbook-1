@@ -32,6 +32,7 @@ public class Application {
         return factory;
     }
 
+    // swagger UI available on http://localhost:8080/swagger-ui.html
     @Bean
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)

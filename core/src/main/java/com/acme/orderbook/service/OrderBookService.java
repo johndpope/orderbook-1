@@ -69,6 +69,11 @@ public class OrderBookService {
         orderBook(instrumentId).close();
     }
 
+    public boolean isOpen(long instrumentId) {
+        validate(instrumentId);
+        return orderBook(instrumentId).isOpen();
+    }
+
     public void addOrder(long instrumentId, int quantity, Double limitPrice) {
         validate(instrumentId);
         if (quantity <= 0) {

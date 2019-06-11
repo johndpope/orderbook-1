@@ -50,6 +50,13 @@ public class AppRestController {
         return ResponseEntity.ok().build();
     }
 
+    @RequestMapping(method = RequestMethod.GET, value = "order-book/{instrumentId}/is-open")
+    public boolean isOrderBookOpen(
+            @PathVariable("instrumentId") long instrumentId) {
+
+        return orderBookService.isOpen(instrumentId);
+    }
+
     @RequestMapping(method = RequestMethod.POST, value = "order-book/{instrumentId}/add-order")
     public ResponseEntity<?> addOrder(
             @PathVariable("instrumentId") long instrumentId,
@@ -82,7 +89,7 @@ public class AppRestController {
     }
 
     @RequestMapping(method = RequestMethod.GET, value = "order-book/{instrumentId}/is-executed")
-    public boolean isExecuted(
+    public boolean isOrderBookExecuted(
             @PathVariable("instrumentId") long instrumentId) {
 
         return orderBookService.isExecuted(instrumentId);
@@ -103,7 +110,7 @@ public class AppRestController {
         return ResponseEntity.ok(performanceMetrics);
     }
 
-    @RequestMapping(method = RequestMethod.PUT, value = "test/graceful-shutdown")
+    @RequestMapping(method = RequestMethod.GET, value = "test/graceful-shutdown")
     public String gracefulShutdownTest() {
         try {
             Thread.sleep(20000);
